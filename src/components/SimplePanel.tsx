@@ -14,11 +14,28 @@ const L = require("../external/leaflet/leaflet");
 interface Props extends PanelProps<SimpleOptions> {}
 
 export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
+  let map: any;
+
+
+  console.log(data);
 
 
   useEffect(() => {
 
-    const  map = L.map('map').setView([51.505, -0.09], 13);
+    if(map) {
+      map.remove();
+      map.invalidateSize();
+      map = null;
+
+      const mapLayer = document.getElementById('mapLayer');
+      if(mapLayer) {
+        mapLayer.innerHTML = "";
+      }
+    }
+
+    map = L.map('map').setView([51.505, -0.09], 13);
+
+    
 
 
 
@@ -49,10 +66,25 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
     L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {}).addTo(map);
 
 
-    const marker = L.marker([0, 0], { icon: svgIcon }).addTo(map);
-    marker.on('click', function(){ 
+    L.marker([51.490, -0.07], { icon: svgIcon }).on('click', function(){ 
       window.open('https://google.com', '_blank');
-    });
+    }).addTo(map);
+
+    L.marker([51.500, -0.09], { icon: svgIcon }).on('click', function(){ 
+      window.open('https://google.com', '_blank');
+    }).addTo(map);
+    L.marker([51.503, -0.08], { icon: svgIcon }).on('click', function(){ 
+      window.open('https://google.com', '_blank');
+    }).addTo(map);
+    L.marker([51.496, -0.07], { icon: svgIcon }).on('click', function(){ 
+      window.open('https://google.com', '_blank');
+    }).addTo(map);
+
+
+
+    setTimeout(function () {
+      window.dispatchEvent(new Event("resize"));
+    }, 500);
 
   }, [])
 
