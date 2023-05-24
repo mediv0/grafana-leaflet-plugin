@@ -2,45 +2,59 @@
 /* @ts-nocheck */
 
 import React, { useEffect } from 'react';
-import { PanelProps } from '@grafana/data';
+import { PanelProps, Vector } from '@grafana/data';
 import { SimpleOptions } from 'types';
 import "../external/leaflet/leaflet.css";
 
 
 const L = require("../external/leaflet/leaflet");
 
+let map: any;
 
 
 interface Props extends PanelProps<SimpleOptions> {}
 
 export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
-  let map: any;
-
-
-  console.log(data);
-
 
   useEffect(() => {
 
-    if(map) {
-      map.remove();
-      map.invalidateSize();
-      map = null;
 
-      const mapLayer = document.getElementById('mapLayer');
-      if(mapLayer) {
-        mapLayer.innerHTML = "";
-      }
+
+  const query: {
+    [name: string]: Vector<any>[]
+  } = {};
+
+
+  if(data.series.length) {
+    const fields = data.series[0].fields;
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i]
+      const fieldName = field.name;
+      const values = field.values as any
+      
+      query[fieldName] = values;
+    }
+  }
+  
+  
+  
+  let container = L.DomUtil.get('map');
+  if(map) {
+    console.log("inside map");
+    const container_map_elem = document.getElementById('map') as HTMLDivElement;
+    container_map_elem.innerHTML = ""
+    map.remove();
+    map.invalidateSize();
+  }
+
+
+  if(container != null){
+    container._leaflet_id = null;
     }
 
     map = L.map('map').setView([51.505, -0.09], 13);
 
-    
-
-
-
     // icons
-
     const svgIcon = L.divIcon({
       html: `
     <svg
@@ -65,32 +79,33 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
 
     L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {}).addTo(map);
 
+    // length of query results for each field
+    if(Object.keys(query).length > 0) {
 
-    L.marker([51.490, -0.07], { icon: svgIcon }).on('click', function(){ 
-      window.open('https://google.com', '_blank');
-    }).addTo(map);
+      const length = query.lat.length
 
-    L.marker([51.500, -0.09], { icon: svgIcon }).on('click', function(){ 
-      window.open('https://google.com', '_blank');
-    }).addTo(map);
-    L.marker([51.503, -0.08], { icon: svgIcon }).on('click', function(){ 
-      window.open('https://google.com', '_blank');
-    }).addTo(map);
-    L.marker([51.496, -0.07], { icon: svgIcon }).on('click', function(){ 
-      window.open('https://google.com', '_blank');
-    }).addTo(map);
+      
+      
+      for(let i = 0 ; i < length; i++) {
+        const lat = (query.lat as any).get(i);
+        const lng = (query.lng as any).get(i);
+        const link = (query.link as any).get(i);
 
+        L.marker([lat, lng], { icon: svgIcon }).on('click', function(){ 
+          window.open(link, '_blank');
+        }).addTo(map);
+      }
 
+    }
 
     setTimeout(function () {
       window.dispatchEvent(new Event("resize"));
     }, 500);
 
-  }, [])
+  })
 
   return (
-    <div id='map' style={{height: "100vh", width: '100%'}}>
-      hello world
+    <div id='map' style={{height: "100%", width: '100%'}}>
     </div>
   );
 };
